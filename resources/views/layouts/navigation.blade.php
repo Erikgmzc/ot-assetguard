@@ -18,6 +18,15 @@
                     <x-nav-link :href="route('assets.index')" :active="request()->routeIs('assets.*')">
                         {{ __('Activos') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')">
+    {{ __('Incidencias') }}
+</x-nav-link>
+
+@if(auth()->user()->isAdmin())
+    <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')">
+        {{ __('Auditoría') }}
+    </x-nav-link>
+@endif
                 </div>
             </div>
 

@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateAssetRequest;
 use App\Models\Asset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use App\Services\AuditLogger;
 
 class AssetController extends Controller
 {
@@ -23,13 +24,18 @@ class AssetController extends Controller
     }
 
     public function store(StoreAssetRequest $request): RedirectResponse
-    {
-        Asset::create($request->validated());
+{
+    $asset = Asset::create($request->validated());
 
-        return redirect()
-            ->route('assets.index')
-            ->with('status', 'Activo registrado correctamente.');
-    }
+    AuditLogger::record('asset.created', $asset, [
+        'name' => $asset->name,
+        'ip_address' => $asset->ip_address,
+    ]);
+
+    return redirect()
+        ->route('assets.index')
+        ->with('status', 'Activo registrado correctamente.');
+}
 
     public function show(Asset $asset): View
     {
@@ -44,20 +50,28 @@ class AssetController extends Controller
     }
 
     public function update(UpdateAssetRequest $request, Asset $asset): RedirectResponse
-    {
-        $asset->update($request->validated());
+{
+    $asset->update($request->validated());
 
-        return redirect()
-            ->route('assets.index')
-            ->with('status', 'Activo actualizado correctamente.');
-    }
+    AuditLogger::record('asset.updated', $asset, [
+        'name' => $asset->name,
+        'status' => $asset->status,
+    ]);
 
-    public function destroy(Asset $asset): RedirectResponse
-    {
-        $asset->delete();
+    return redirect()
+        ->route('assets.index')
+        ->with('status', 'Activo actualizado correctamente.');
+}
 
-        return redirect()
-            ->route('assets.index')
-            ->with('status', 'Activo eliminado del inventario.');
-    }
+public function destroy(Asset $asset): RedirectResponse
+{
+    $snapshot = ['name' => $asset->name, 'ip_address' => $asset->ip_address];
+    AuditLogger::record('asset.deleted', $asset, $snapshot);
+
+    $asset->delete();
+
+    return redirect()
+        ->route('assets.index')
+        ->with('status', 'Activo eliminado del inventario.');
+}
 }
